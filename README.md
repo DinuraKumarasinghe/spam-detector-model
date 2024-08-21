@@ -1,93 +1,160 @@
-# spam-detector-model
+Sure! Here’s a detailed description of the code with key sections highlighted:
 
-1. Confusion Matrix
-Explanation: The confusion matrix is a 2x2 table that shows the number of correct and incorrect predictions made by the model compared to the actual outcomes.
-True Positives (TP): Correctly predicted spam messages (top-left).
-True Negatives (TN): Correctly predicted ham messages (bottom-right).
-False Positives (FP): Ham messages incorrectly classified as spam (top-right). This is also called a "Type I error."
-False Negatives (FN): Spam messages incorrectly classified as ham (bottom-left). This is also called a "Type II error."
-Good Model Indicators:
-High values for TP and TN.
-Low values for FP and FN.
-A good model will have most predictions along the diagonal (top-left to bottom-right).
-2. Classification Report Bar Chart (Precision, Recall, F1-Score)
-Explanation: The classification report provides three important metrics for each class (ham and spam):
-Precision: The proportion of positive predictions that are actually correct. For spam detection, it’s the percentage of messages labeled as spam that are truly spam.
-Precision
-=
-𝑇
-𝑃
-𝑇
-𝑃
-+
-𝐹
-𝑃
-Precision= 
-TP+FP
-TP
-​
- 
-Recall: The proportion of actual positives that are correctly identified. It’s the percentage of spam messages correctly identified by the model.
-Recall
-=
-𝑇
-𝑃
-𝑇
-𝑃
-+
-𝐹
-𝑁
-Recall= 
-TP+FN
-TP
-​
- 
-F1-Score: The harmonic mean of precision and recall. It balances the two metrics and is especially useful when you have an uneven class distribution.
-F1-Score
-=
-2
-×
-Precision
-×
-Recall
-Precision
-+
-Recall
-F1-Score=2× 
-Precision+Recall
-Precision×Recall
-​
- 
-Good Model Indicators:
-High precision, recall, and F1-score for both classes.
-These scores are usually close to 1 (100%) in a good model.
-3. ROC Curve
-Explanation: The ROC (Receiver Operating Characteristic) curve plots the true positive rate (recall) against the false positive rate (1-specificity) for different threshold values.
-True Positive Rate (TPR): Same as recall.
-False Positive Rate (FPR): Proportion of actual negatives (ham) incorrectly classified as positive (spam).
-FPR
-=
-𝐹
-𝑃
-𝐹
-𝑃
-+
-𝑇
-𝑁
-FPR= 
-FP+TN
-FP
-​
- 
-Area Under the Curve (AUC): The ROC curve’s AUC value indicates the model’s ability to discriminate between positive and negative classes.
-AUC = 1.0 means perfect classification.
-AUC = 0.5 means no discriminative power (random guessing).
-Good Model Indicators:
-The ROC curve should be as close to the top-left corner as possible.
-The AUC should be as close to 1 as possible.
-Summary: Evaluating a Good Model
-High Accuracy: Look for a high accuracy score, indicating that most predictions are correct.
-Confusion Matrix: Most values should be along the diagonal (TP and TN), with low FP and FN values.
-Classification Report: High precision, recall, and F1-scores (close to 1) for both classes indicate a balanced model that performs well across multiple metrics.
-ROC Curve: The curve should hug the top-left corner, and the AUC should be close to 1.
-If these indicators are met, your model is performing well. If not, you might need to fine-tune your model, improve preprocessing, or try a different model altogether.
+```python
+# Import necessary libraries
+import pandas as pd
+import nltk
+from nltk.stem.porter import PorterStemmer
+from nltk.corpus import stopwords
+import string
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.model_selection import train_test_split
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report, roc_curve, auc
+from sklearn.preprocessing import LabelBinarizer
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Load the dataset
+df = pd.read_csv('spam.csv', encoding='latin-1')
+
+# Drop unnecessary columns
+df.drop(['Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4'], axis=1, inplace=True)
+
+# Rename columns
+df.rename(columns={'v1': 'class', 'v2': 'sms'}, inplace=True)
+
+# Drop duplicate entries
+df.drop_duplicates(keep='first', inplace=True)
+
+# Add a column for the length of SMS messages
+df["length"] = df['sms'].apply(len)
+
+# Plot histogram of SMS lengths by class
+df.hist(column='length', by='class', bins=20, figsize=(10, 5))
+
+# Download NLTK resources
+nltk.download('stopwords')
+nltk.download('punkt')
+
+# Initialize the Porter Stemmer
+pt = PorterStemmer()
+
+# Define a function to preprocess text
+def clean(text):
+    text = text.lower()
+    text = nltk.word_tokenize(text)
+    
+    # Remove non-alphanumeric tokens
+    text = [i for i in text if i.isalnum()]
+
+    # Remove stopwords and punctuation
+    text = [i for i in text if i not in stopwords.words('english') and i not in string.punctuation]
+
+    # Stem the words
+    text = [pt.stem(i) for i in text]
+
+    return " ".join(text)
+
+# Apply the cleaning function to the SMS messages
+df['sms_cleaned'] = df['sms'].apply(clean)
+
+# Vectorize the cleaned SMS messages using TF-IDF
+tvec = TfidfVectorizer(max_features=3000)
+x = tvec.fit_transform(df['sms_cleaned']).toarray()
+
+# Define the target variable
+y = df['class'].values
+
+# Split the data into training and testing sets
+x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=0)
+
+# Train a Naive Bayes model
+model = MultinomialNB()
+model.fit(x_train, y_train)
+
+# Make predictions on the test set
+y_pred = model.predict(x_test)
+
+# Evaluate the model's accuracy and confusion matrix
+print("Accuracy:", accuracy_score(y_test, y_pred))
+print("Confusion Matrix:\n", confusion_matrix(y_test, y_pred))
+
+# Plot the confusion matrix
+cm = confusion_matrix(y_test, y_pred)
+sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", xticklabels=['Ham', 'Spam'], yticklabels=['Ham', 'Spam'])
+plt.xlabel('Predicted')
+plt.ylabel('Actual')
+plt.title('Confusion Matrix')
+plt.show()
+
+# Generate and plot the classification report
+report = classification_report(y_test, y_pred, target_names=['Ham', 'Spam'], output_dict=True)
+report_df = pd.DataFrame(report).transpose()
+report_df.iloc[:-1, :-1].plot(kind='bar', figsize=(10, 5))
+plt.title('Classification Report Metrics')
+plt.ylabel('Score')
+plt.show()
+
+# Binarize the output for ROC curve
+lb = LabelBinarizer()
+y_test_bin = lb.fit_transform(y_test)
+y_pred_bin = lb.transform(y_pred)
+
+# Compute ROC curve and AUC
+fpr, tpr, _ = roc_curve(y_test_bin, y_pred_bin)
+roc_auc = auc(fpr, tpr)
+
+# Plot ROC curve
+plt.figure()
+plt.plot(fpr, tpr, color='darkorange', lw=2, label='ROC curve (area = %0.2f)' % roc_auc)
+plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('Receiver Operating Characteristic')
+plt.legend(loc="lower right")
+plt.show()
+```
+
+### Code Breakdown
+
+1. **Import Libraries**
+   - Libraries for data manipulation, natural language processing, machine learning, and visualization are imported.
+
+2. **Load and Preprocess Data**
+   - **`df = pd.read_csv('spam.csv', encoding='latin-1')`**: Loads the dataset.
+   - **`df.drop(['Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4'], axis=1, inplace=True)`**: Drops unnecessary columns.
+   - **`df.rename(columns={'v1': 'class', 'v2': 'sms'}, inplace=True)`**: Renames columns for clarity.
+   - **`df.drop_duplicates(keep='first', inplace=True)`**: Removes duplicate rows.
+   - **`df["length"] = df['sms'].apply(len)`**: Adds a column for the length of SMS messages.
+   - **`df.hist(column='length', by='class', bins=20, figsize=(10, 5))`**: Plots the histogram of SMS lengths by class.
+
+3. **Text Preprocessing**
+   - **`nltk.download('stopwords')` and `nltk.download('punkt')`**: Download NLTK resources for text processing.
+   - **`pt = PorterStemmer()`**: Initializes the Porter Stemmer.
+   - **`def clean(text): ...`**: Defines a function to preprocess text by converting to lowercase, tokenizing, removing stopwords and punctuation, and stemming.
+   - **`df['sms_cleaned'] = df['sms'].apply(clean)`**: Applies the cleaning function to the SMS messages.
+
+4. **Feature Extraction and Model Training**
+   - **`tvec = TfidfVectorizer(max_features=3000)`**: Initializes TF-IDF vectorizer.
+   - **`x = tvec.fit_transform(df['sms_cleaned']).toarray()`**: Vectorizes the cleaned SMS messages.
+   - **`y = df['class'].values`**: Defines the target variable.
+   - **`x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=0)`**: Splits the data into training and testing sets.
+   - **`model = MultinomialNB()`**: Initializes Naive Bayes classifier.
+   - **`model.fit(x_train, y_train)`**: Trains the model.
+   - **`y_pred = model.predict(x_test)`**: Makes predictions on the test set.
+
+5. **Model Evaluation and Visualization**
+   - **`print("Accuracy:", accuracy_score(y_test, y_pred))`**: Prints the accuracy of the model.
+   - **`print("Confusion Matrix:\n", confusion_matrix(y_test, y_pred))`**: Prints the confusion matrix.
+   - **`sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", xticklabels=['Ham', 'Spam'], yticklabels=['Ham', 'Spam'])`**: Plots the confusion matrix as a heatmap.
+   - **`report = classification_report(y_test, y_pred, target_names=['Ham', 'Spam'], output_dict=True)`**: Generates a classification report.
+   - **`report_df = pd.DataFrame(report).transpose()` and `report_df.iloc[:-1, :-1].plot(kind='bar', figsize=(10, 5))`**: Creates and plots the classification report metrics.
+   - **`lb = LabelBinarizer()`**: Binarizes the output for ROC curve calculation.
+   - **`fpr, tpr, _ = roc_curve(y_test_bin, y_pred_bin)`**: Computes the ROC curve.
+   - **`roc_auc = auc(fpr, tpr)`**: Calculates the AUC.
+   - **`plt.plot(fpr, tpr, color='darkorange', lw=2, label='ROC curve (area = %0.2f)' % roc_auc)`**: Plots the ROC curve.
+
+This code performs data preprocessing, trains a Naive Bayes classifier, and evaluates the model using several visualizations to understand its performance comprehensively.
