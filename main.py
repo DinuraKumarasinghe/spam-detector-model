@@ -76,14 +76,14 @@ print("Confusion Matrix:\n", confusion_matrix(y_test, y_pred))
 
 # Plot the confusion matrix
 cm = confusion_matrix(y_test, y_pred)
-sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", xticklabels=['Ham', 'Spam'], yticklabels=['Ham', 'Spam'])
+sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", xticklabels=['NotSpam', 'Spam'], yticklabels=['NotSpam', 'Spam'])
 plt.xlabel('Predicted')
 plt.ylabel('Actual')
 plt.title('Confusion Matrix')
 plt.show()
 
 # Generate classification report
-report = classification_report(y_test, y_pred, target_names=['Ham', 'Spam'], output_dict=True)
+report = classification_report(y_test, y_pred, target_names=['NotSpam', 'Spam'], output_dict=True)
 
 # Convert to DataFrame for easier plotting
 report_df = pd.DataFrame(report).transpose()
