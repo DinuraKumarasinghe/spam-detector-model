@@ -40,3 +40,5 @@
    - **`plt.plot(fpr, tpr, color='darkorange', lw=2, label='ROC curve (area = %0.2f)' % roc_auc)`**: Plots the ROC curve.
 
 This code performs data preprocessing, trains a Naive Bayes classifier, and evaluates the model using several visualizations to understand its performance comprehensively.
+
+
