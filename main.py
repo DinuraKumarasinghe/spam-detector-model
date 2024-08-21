@@ -23,6 +23,9 @@ df.rename(columns={'v1': 'class', 'v2': 'sms'}, inplace=True)
 # Drop duplicates
 df.drop_duplicates(keep='first', inplace=True)
 
+# Replace 'ham' with 'notspam' in the 'class' column
+df['class'] = df['class'].replace({'ham': 'notspam', 'spam': 'spam'})
+
 # Add a column for the length of the SMS messages
 df["length"] = df['sms'].apply(len)
 
