@@ -38,6 +38,9 @@
    - **`fpr, tpr, _ = roc_curve(y_test_bin, y_pred_bin)`**: Computes the ROC curve.
    - **`roc_auc = auc(fpr, tpr)`**: Calculates the AUC.
    - **`plt.plot(fpr, tpr, color='darkorange', lw=2, label='ROC curve (area = %0.2f)' % roc_auc)`**: Plots the ROC curve.
+   <img width="900" height="521" alt="Image" src="https://github.com/user-attachments/assets/5dfd240f-8ae3-4cbb-8d5b-35b0362e5d51" />
+   <img width="602" height="480" alt="Image" src="https://github.com/user-attachments/assets/ebfa856a-9906-4c2d-b0e0-9e6c8148626a" />
+   <img width="875" height="535" alt="Image" src="https://github.com/user-attachments/assets/30a0322c-6d43-490d-ad93-ad638797da8d" />
 
 This code performs data preprocessing, trains a Naive Bayes classifier, and evaluates the model using several visualizations to understand its performance comprehensively.
 
